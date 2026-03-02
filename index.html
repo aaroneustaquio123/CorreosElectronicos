@@ -2,59 +2,105 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Ventas CAYMA</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>Sistema de Emisión CAYMA - Oficial</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        :root { --blue-cayma: #1a73e8; --red-recibo: #d93025; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .main-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); width: 900px; }
         
-        .grid-inputs { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr auto; gap: 10px; background: #f9f9f9; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        button.add-btn { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        button.add-btn:hover { background: #2980b9; }
+        .recibo-manual {
+            border: 2px solid #333;
+            padding: 25px;
+            background: #fff;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .header-recibo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .serie-box { border: 2px solid var(--red-recibo); padding: 10px 20px; color: var(--red-recibo); font-weight: bold; font-size: 20px; }
+        
+        .row { margin: 18px 0; display: flex; align-items: center; gap: 10px; }
+        .row label { font-weight: bold; color: #444; white-space: nowrap; }
+        
+        input, select {
+            border: none;
+            border-bottom: 1px solid #000;
+            padding: 5px;
+            font-size: 16px;
+            background: transparent;
+            outline: none;
+        }
+        .input-full { flex-grow: 1; }
+        .input-dni { width: 110px; text-align: center; }
+        .input-fecha { width: 130px; text-align: center; font-family: sans-serif; }
+        .monto-style { width: 100px; font-weight: bold; font-size: 18px; color: var(--blue-cayma); border-bottom: 2px solid var(--blue-cayma); }
 
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #34495e; color: white; padding: 12px; text-align: left; }
+        .btn-emitir { 
+            background: var(--blue-cayma); color: white; border: none; 
+            padding: 15px 30px; border-radius: 8px; cursor: pointer; 
+            font-weight: bold; font-size: 16px; width: 100%; margin-top: 10px;
+        }
+        .btn-emitir:hover { background: #1557b0; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
+        th { text-align: left; padding: 12px; background: #f8f9fa; border-bottom: 2px solid #ddd; }
         td { padding: 12px; border-bottom: 1px solid #eee; }
-        
-        .btn-action { padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 12px; color: white; cursor: pointer; border: none; margin-right: 5px; }
-        .bg-blue { background: #3498db; }
-        .bg-green { background: #27ae60; }
-
-        /* Estilo del QR Modal */
-        #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; }
-        .modal-box { background:white; padding:30px; border-radius:10px; text-align:center; }
+        .correlativo { color: var(--red-recibo); font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Generador de Boletas CAYMA E.I.R.L.</h2>
+<div class="main-card">
+    <h2>Generador de Recibos CAYMA</h2>
     
-    <div class="grid-inputs">
-        <input type="text" id="f-cliente" placeholder="Nombre del Cliente">
-        
-        <select id="f-producto">
-            <option value="ZAPATILLAS URBANAS">Zapatillas Urbanas</option>
-            <option value="BOTAS DE CUERO">Botas de Cuero</option>
-            <option value="ZAPATOS FORMALES">Zapatos Formales</option>
-            <option value="SANDALIAS DEPORTIVAS">Sandalias Deportivas</option>
-            <option value="MANTENIMIENTO/LIMPIEZA">Kit de Limpieza</option>
-        </select>
+    <div class="recibo-manual">
+        <div class="header-recibo">
+            <div>
+                <strong style="font-size: 24px;">CAYMA E.I.R.L.</strong><br>
+                <label>Fecha:</label> 
+                <input type="date" id="f-fecha" class="input-fecha">
+            </div>
+            <div class="serie-box">
+                N° <span id="num-serie">G173-2026-0001</span>
+            </div>
+        </div>
 
-        <input type="number" id="f-monto" placeholder="Precio S/">
-        <input type="text" id="f-id" placeholder="N° Boleta" value="B007-000">
-        
-        <button class="add-btn" onclick="agregarVenta()">Generar</button>
+        <div class="row">
+            <label>Recibí de:</label>
+            <input type="text" id="f-cliente" class="input-full" placeholder="Nombre completo">
+            <label>DNI:</label>
+            <input type="text" id="f-dni" class="input-dni" placeholder="8 dígitos" maxlength="8">
+        </div>
+
+        <div class="row">
+            <label>La cantidad de: S/</label>
+            <input type="number" id="f-monto" class="monto-style" placeholder="0.00">
+            
+            <label style="margin-left: 15px;">Concepto:</label>
+            <select id="f-producto" class="input-full">
+                <option value="ZAPATILLAS URBANAS">ZAPATILLAS URBANAS</option>
+                <option value="BOTAS DE CUERO">BOTAS DE CUERO</option>
+                <option value="ZAPATOS FORMALES">ZAPATOS FORMALES</option>
+                <option value="SANDALIAS DEPORTIVAS">SANDALIAS DEPORTIVAS</option>
+                <option value="LIMPIEZA Y CUIDADO">KIT DE LIMPIEZA</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <label>Observaciones:</label>
+            <input type="text" id="f-obs" class="input-full" placeholder="Ej: Talla 42, Color Negro, etc.">
+        </div>
+
+        <button class="btn-emitir" onclick="procesarVenta()">EMITIR Y PASAR AL SIGUIENTE</button>
     </div>
 
+    <h3>Historial de Ventas</h3>
     <table>
         <thead>
             <tr>
-                <th>Cliente</th>
-                <th>Producto</th>
-                <th>Total</th>
+                <th>N° Recibo</th>
+                <th>Cliente / DNI</th>
+                <th>Producto / Obs.</th>
+                <th>Monto</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -62,46 +108,47 @@
     </table>
 </div>
 
-<div id="modal" onclick="this.style.display='none'">
-    <div class="modal-box" onclick="event.stopPropagation()">
-        <h3 id="m-title"></h3>
-        <div id="qrcode" style="display: flex; justify-content: center;"></div>
-        <p>Escanea para validar la compra</p>
-        <button onclick="document.getElementById('modal').style.display='none'">Cerrar</button>
-    </div>
-</div>
-
 <script>
-    function agregarVenta() {
+    // Establecer fecha de hoy por defecto
+    document.getElementById('f-fecha').valueAsDate = new Date();
+
+    let contador = 1;
+
+    function procesarVenta() {
+        const serieActual = document.getElementById('num-serie').innerText;
         const cliente = document.getElementById('f-cliente').value;
-        const producto = document.getElementById('f-producto').value;
+        const dni = document.getElementById('f-dni').value;
         const monto = document.getElementById('f-monto').value;
-        const id = document.getElementById('f-id').value;
+        const producto = document.getElementById('f-producto').value;
+        const obs = document.getElementById('f-obs').value;
+        const fecha = document.getElementById('f-fecha').value;
 
-        if(!cliente || !monto) return alert("Llena los datos");
+        if(!cliente || !monto) return alert("Por favor ingresa Cliente y Monto");
 
-        // Creamos el link con el nuevo parámetro "prod"
-        const urlBase = "https://fascinating-platypus-2eb4b1.netlify.app/index.html";
-        const linkFinal = `${urlBase}?id=${id}&monto=${monto}&cliente=${encodeURIComponent(cliente)}&prod=${encodeURIComponent(producto)}`;
+        // Link para boleta.html (añadimos fecha y obs)
+        const urlBase = window.location.origin + "/boleta.html";
+        const linkFinal = `${urlBase}?id=${serieActual}&monto=${monto}&cliente=${encodeURIComponent(cliente)}&dni=${dni}&prod=${encodeURIComponent(producto)}&obs=${encodeURIComponent(obs)}&fecha=${fecha}`;
 
         const tabla = document.getElementById('lista-ventas');
-        const fila = tabla.insertRow();
+        const fila = tabla.insertRow(0);
         fila.innerHTML = `
-            <td>${cliente}</td>
-            <td><strong>${producto}</strong></td>
-            <td>S/ ${parseFloat(monto).toFixed(2)}</td>
-            <td>
-                <button class="btn-action bg-blue" onclick="verQR('${linkFinal}', '${cliente}')">Ver QR</button>
-                <a href="${linkFinal}" target="_blank" class="btn-action bg-green">Abrir Boleta</a>
-            </td>
+            <td class="correlativo">${serieActual}</td>
+            <td>${cliente}<br><small>DNI: ${dni}</small></td>
+            <td>${producto}<br><small style="color:gray">${obs}</small></td>
+            <td><strong>S/ ${parseFloat(monto).toFixed(2)}</strong></td>
+            <td><a href="${linkFinal}" target="_blank">Abrir Boleta</a></td>
         `;
-    }
 
-    function verQR(link, nombre) {
-        document.getElementById('modal').style.display = 'flex';
-        document.getElementById('m-title').innerText = "Validación: " + nombre;
-        document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), { text: link, width: 180, height: 180 });
+        // Incremento
+        contador++;
+        let nuevoNumero = contador.toString().padStart(4, '0');
+        document.getElementById('num-serie').innerText = `G173-2026-${nuevoNumero}`;
+
+        // Limpiar para el siguiente cliente
+        document.getElementById('f-cliente').value = "";
+        document.getElementById('f-dni').value = "";
+        document.getElementById('f-monto').value = "";
+        document.getElementById('f-obs').value = "";
     }
 </script>
 

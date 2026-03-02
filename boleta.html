@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Recibo Electrónico - CAYMA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { background: #555; display: flex; justify-content: center; padding: 20px; font-family: 'Courier New', Courier, monospace; }
+        .ticket { background: white; width: 320px; padding: 20px; border: 1px solid #000; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .center { text-align: center; }
+        .logo { width: 80px; height: 80px; margin-bottom: 10px; border-radius: 50%; object-fit: cover; }
+        .line { border-top: 1px dashed #000; margin: 10px 0; }
+        .details { font-size: 13px; line-height: 1.4; }
+        .qr-box { display: flex; flex-direction: column; align-items: center; margin-top: 15px; }
+        .total-box { text-align: right; font-size: 18px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <div class="center">
+            <img src="Logorecibo.jpeg" alt="Logo CAYMA" class="logo"><br>            
+            R.U.C. 20459759833<br>
+            AV. SANTA CRUZ NRO. 851 - MIRAFLORES<br>
+            <div class="line"></div>
+            <strong style="font-size: 16px;">RECIBO ELECTRÓNICO</strong><br>
+            <span id="disp-id" style="color: red; font-weight: bold;"></span>
+        </div>
+
+        <div class="details" style="margin-top:15px">
+            <strong>FECHA:</strong> <span id="disp-fecha"></span><br>
+            <strong>CLIENTE:</strong> <span id="disp-cliente"></span><br>
+            <strong>DNI:</strong> <span id="disp-dni"></span>
+        </div>
+
+        <div class="line"></div>
+
+        <div class="details">
+            <strong>CANTIDAD:</strong> 1<br>
+            <strong>CONCEPTO:</strong> <span id="disp-prod"></span><br>
+            <strong>OBSERVACIÓN:</strong> <span id="disp-obs"></span>
+        </div>
+
+        <div class="line"></div>
+
+        <div class="total-box">
+            <strong>TOTAL: S/ <span id="disp-total"></span></strong>
+        </div>
+
+        <div class="qr-box">
+            <div id="qrcode"></div>
+            <p style="font-size: 10px; margin-top: 8px; font-weight: bold;">VALIDACIÓN CAYMA-SISTEMAS</p>
+        </div>
+    </div>
+
+    <script>
+        // Capturar los datos de la URL
+        const params = new URLSearchParams(window.location.search);
+        
+        const id = params.get('id') || "G173-2026-0000";
+        const monto = parseFloat(params.get('monto')) || 0;
+        const cliente = params.get('cliente') || "PÚBLICO GENERAL";
+        const dni = params.get('dni') || "--------";
+        const producto = params.get('prod') || "CALZADO";
+        const observaciones = params.get('obs') || "Sin observaciones";
+        const fechaParam = params.get('fecha');
+
+        // Mostrar los datos en el HTML
+        document.getElementById('disp-id').innerText = id;
+        document.getElementById('disp-cliente').innerText = cliente.toUpperCase();
+        document.getElementById('disp-dni').innerText = dni;
+        document.getElementById('disp-prod').innerText = producto.toUpperCase();
+        document.getElementById('disp-obs').innerText = observaciones;
+        document.getElementById('disp-total').innerText = monto.toFixed(2);
+        
+        // Formatear fecha
+        const fechaMostrar = fechaParam ? new Date(fechaParam + "T12:00:00").toLocaleDateString() : new Date().toLocaleDateString();
+        document.getElementById('disp-fecha').innerText = fechaMostrar;
+
+        // Generar el código QR
+        new QRCode(document.getElementById("qrcode"), {
+            text: window.location.href,
+            width: 130,
+            height: 130
+        });
+    </script>
+</body>
+</html>

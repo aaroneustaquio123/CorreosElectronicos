@@ -2,49 +2,42 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Sistema de Emisión CAYMA - Oficial</title>
+    <title>Sistema CAYMA - Exportación Profesional</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <style>
-        :root { --blue-cayma: #1a73e8; --red-recibo: #d93025; }
+        :root { --blue-cayma: #1a73e8; --red-recibo: #d93025; --green-excel: #1d6f42; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-        .main-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); width: 900px; }
+        .main-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); width: 950px; }
         
-        .recibo-manual {
-            border: 2px solid #333;
-            padding: 25px;
-            background: #fff;
-            margin-bottom: 30px;
-            position: relative;
-        }
+        .recibo-manual { border: 2px solid #333; padding: 25px; background: #fff; margin-bottom: 30px; }
         .header-recibo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .serie-box { border: 2px solid var(--red-recibo); padding: 10px 20px; color: var(--red-recibo); font-weight: bold; font-size: 20px; }
         
         .row { margin: 18px 0; display: flex; align-items: center; gap: 10px; }
         .row label { font-weight: bold; color: #444; white-space: nowrap; }
         
-        input, select {
-            border: none;
-            border-bottom: 1px solid #000;
-            padding: 5px;
-            font-size: 16px;
-            background: transparent;
-            outline: none;
-        }
+        input, select { border: none; border-bottom: 1px solid #000; padding: 5px; font-size: 16px; background: transparent; outline: none; }
         .input-full { flex-grow: 1; }
-        .input-dni { width: 110px; text-align: center; }
-        .input-fecha { width: 130px; text-align: center; font-family: sans-serif; }
         .monto-style { width: 100px; font-weight: bold; font-size: 18px; color: var(--blue-cayma); border-bottom: 2px solid var(--blue-cayma); }
 
-        .btn-emitir { 
-            background: var(--blue-cayma); color: white; border: none; 
-            padding: 15px 30px; border-radius: 8px; cursor: pointer; 
-            font-weight: bold; font-size: 16px; width: 100%; margin-top: 10px;
-        }
-        .btn-emitir:hover { background: #1557b0; }
+        /* Botonera */
+        .toolbar { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; gap: 5px; }
+        .btn-emitir { background: var(--blue-cayma); width: 100%; padding: 15px; font-size: 16px; margin-bottom: 20px; }
+        .btn-pdf { background: #e74c3c; }
+        .btn-excel { background: var(--green-excel); }
+        .btn-print { background: #34495e; }
+        .btn:hover { opacity: 0.9; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th { text-align: left; padding: 12px; background: #f8f9fa; border-bottom: 2px solid #ddd; }
         td { padding: 12px; border-bottom: 1px solid #eee; }
         .correlativo { color: var(--red-recibo); font-weight: bold; }
+        
+        @media print { .toolbar, .recibo-manual, h2, h3 { display: none; } .main-card { box-shadow: none; width: 100%; } }
     </style>
 </head>
 <body>
@@ -56,25 +49,21 @@
         <div class="header-recibo">
             <div>
                 <strong style="font-size: 24px;">CAYMA E.I.R.L.</strong><br>
-                <label>Fecha:</label> 
-                <input type="date" id="f-fecha" class="input-fecha">
+                <label>Fecha:</label> <input type="date" id="f-fecha" style="width:140px">
             </div>
-            <div class="serie-box">
-                N° <span id="num-serie">G173-2026-0001</span>
-            </div>
+            <div class="serie-box">N° <span id="num-serie">G173-2026-0001</span></div>
         </div>
 
         <div class="row">
             <label>Recibí de:</label>
             <input type="text" id="f-cliente" class="input-full" placeholder="Nombre completo">
             <label>DNI:</label>
-            <input type="text" id="f-dni" class="input-dni" placeholder="8 dígitos" maxlength="8">
+            <input type="text" id="f-dni" style="width:110px" placeholder="8 dígitos" maxlength="8">
         </div>
 
         <div class="row">
             <label>La cantidad de: S/</label>
             <input type="number" id="f-monto" class="monto-style" placeholder="0.00">
-            
             <label style="margin-left: 15px;">Concepto:</label>
             <select id="f-producto" class="input-full">
                 <option value="ZAPATILLAS URBANAS">ZAPATILLAS URBANAS</option>
@@ -87,21 +76,28 @@
 
         <div class="row">
             <label>Observaciones:</label>
-            <input type="text" id="f-obs" class="input-full" placeholder="Ej: Talla 42, Color Negro, etc.">
+            <input type="text" id="f-obs" class="input-full" placeholder="Talla, color, etc.">
         </div>
 
-        <button class="btn-emitir" onclick="procesarVenta()">EMITIR Y PASAR AL SIGUIENTE</button>
+        <button class="btn btn-emitir" onclick="procesarVenta()">EMITIR Y REGISTRAR</button>
+    </div>
+
+    <div class="toolbar">
+        <button class="btn btn-pdf" onclick="exportarPDF()">📄 Exportar PDF</button>
+        <button class="btn btn-excel" onclick="exportarExcel()">📊 Exportar Excel</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ Imprimir Tabla</button>
     </div>
 
     <h3>Historial de Ventas</h3>
-    <table>
+    <table id="tabla-ventas">
         <thead>
             <tr>
                 <th>N° Recibo</th>
+                <th>Fecha</th>
                 <th>Cliente / DNI</th>
                 <th>Producto / Obs.</th>
-                <th>Monto</th>
-                <th>Acciones</th>
+                <th>Monto (S/)</th>
+                <th class="no-export">Acciones</th>
             </tr>
         </thead>
         <tbody id="lista-ventas"></tbody>
@@ -109,9 +105,7 @@
 </div>
 
 <script>
-    // Establecer fecha de hoy por defecto
     document.getElementById('f-fecha').valueAsDate = new Date();
-
     let contador = 1;
 
     function procesarVenta() {
@@ -123,9 +117,8 @@
         const obs = document.getElementById('f-obs').value;
         const fecha = document.getElementById('f-fecha').value;
 
-        if(!cliente || !monto) return alert("Por favor ingresa Cliente y Monto");
+        if(!cliente || !monto) return alert("Ingresa Cliente y Monto");
 
-        // Link para boleta.html (añadimos fecha y obs)
         const urlBase = window.location.origin + "/boleta.html";
         const linkFinal = `${urlBase}?id=${serieActual}&monto=${monto}&cliente=${encodeURIComponent(cliente)}&dni=${dni}&prod=${encodeURIComponent(producto)}&obs=${encodeURIComponent(obs)}&fecha=${fecha}`;
 
@@ -133,22 +126,36 @@
         const fila = tabla.insertRow(0);
         fila.innerHTML = `
             <td class="correlativo">${serieActual}</td>
+            <td>${fecha}</td>
             <td>${cliente}<br><small>DNI: ${dni}</small></td>
             <td>${producto}<br><small style="color:gray">${obs}</small></td>
-            <td><strong>S/ ${parseFloat(monto).toFixed(2)}</strong></td>
-            <td><a href="${linkFinal}" target="_blank">Abrir Boleta</a></td>
+            <td>${parseFloat(monto).toFixed(2)}</td>
+            <td class="no-export"><a href="${linkFinal}" target="_blank">Abrir Boleta</a></td>
         `;
 
-        // Incremento
         contador++;
-        let nuevoNumero = contador.toString().padStart(4, '0');
-        document.getElementById('num-serie').innerText = `G173-2026-${nuevoNumero}`;
+        document.getElementById('num-serie').innerText = `G173-2026-${contador.toString().padStart(4, '0')}`;
+        document.getElementById('f-cliente').value = ""; document.getElementById('f-monto').value = ""; document.getElementById('f-obs').value = "";
+    }
 
-        // Limpiar para el siguiente cliente
-        document.getElementById('f-cliente').value = "";
-        document.getElementById('f-dni').value = "";
-        document.getElementById('f-monto').value = "";
-        document.getElementById('f-obs').value = "";
+    // FUNCION PDF
+    function exportarPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text("Reporte de Ventas CAYMA E.I.R.L.", 14, 15);
+        doc.autoTable({ 
+            html: '#tabla-ventas',
+            columns: [0, 1, 2, 3, 4], // No exportamos la columna "Acciones"
+            startY: 20
+        });
+        doc.save("Ventas_Cayma.pdf");
+    }
+
+    // FUNCION EXCEL
+    function exportarExcel() {
+        const table = document.getElementById("tabla-ventas");
+        const wb = XLSX.utils.table_to_book(table, { sheet: "Ventas" });
+        XLSX.writeFile(wb, "Reporte_Cayma.xlsx");
     }
 </script>
 

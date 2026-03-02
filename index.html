@@ -2,86 +2,108 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Sistema de Validación CAYMA</title>
+    <title>Panel de Ventas CAYMA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: 'Courier New', monospace; background: #333; display: flex; justify-content: center; padding: 20px; }
-        .ticket { background: white; width: 300px; padding: 15px; border: 1px solid #000; }
-        .center { text-align: center; }
-        .bold { font-weight: bold; }
-        .line { border-top: 1px dashed #000; margin: 10px 0; }
-        table { width: 100%; font-size: 11px; }
-        .qr-box { display: flex; flex-direction: column; align-items: center; margin-top: 15px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        
+        .grid-inputs { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr auto; gap: 10px; background: #f9f9f9; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        button.add-btn { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button.add-btn:hover { background: #2980b9; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #34495e; color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        
+        .btn-action { padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 12px; color: white; cursor: pointer; border: none; margin-right: 5px; }
+        .bg-blue { background: #3498db; }
+        .bg-green { background: #27ae60; }
+
+        /* Estilo del QR Modal */
+        #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; }
+        .modal-box { background:white; padding:30px; border-radius:10px; text-align:center; }
     </style>
 </head>
 <body>
 
-<div class="ticket">
-    <div class="center">
-        <div class="bold" style="font-size: 18px;">CAYMA</div>
-        <div style="font-size: 10px;">CAYMA E.I.R.L. | R.U.C. 20459759833</div>
-        <div style="font-size: 9px;">AV. SANTA CRUZ NRO. 851 - MIRAFLORES</div>
-        <div class="line"></div>
-        <div class="bold">BOLETA ELECTRÓNICA</div>
-        <div class="bold" id="folio">B000-00000000</div>
+<div class="container">
+    <h2>Generador de Boletas CAYMA E.I.R.L.</h2>
+    
+    <div class="grid-inputs">
+        <input type="text" id="f-cliente" placeholder="Nombre del Cliente">
+        
+        <select id="f-producto">
+            <option value="ZAPATILLAS URBANAS">Zapatillas Urbanas</option>
+            <option value="BOTAS DE CUERO">Botas de Cuero</option>
+            <option value="ZAPATOS FORMALES">Zapatos Formales</option>
+            <option value="SANDALIAS DEPORTIVAS">Sandalias Deportivas</option>
+            <option value="MANTENIMIENTO/LIMPIEZA">Kit de Limpieza</option>
+        </select>
+
+        <input type="number" id="f-monto" placeholder="Precio S/">
+        <input type="text" id="f-id" placeholder="N° Boleta" value="B007-000">
+        
+        <button class="add-btn" onclick="agregarVenta()">Generar</button>
     </div>
 
-    <div style="font-size: 11px; margin-top: 10px;">
-        <div>FECHA: <span id="fecha">--/--/----</span></div>
-        <div>CLIENTE: <span id="cliente">---</span></div>
-    </div>
-
-    <div class="line"></div>
     <table>
-        <thead><tr><th>CANT</th><th>DESC</th><th>TOTAL</th></tr></thead>
-        <tbody id="lista-productos">
-            </tbody>
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Producto</th>
+                <th>Total</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="lista-ventas"></tbody>
     </table>
-    <div class="line"></div>
+</div>
 
-    <div style="text-align: right; font-size: 12px;">
-        <div>OP. GRAVADA: S/ <span id="gravada">0.00</span></div>
-        <div>IGV (18%): S/ <span id="igv">0.00</span></div>
-        <div class="bold">TOTAL: S/ <span id="total">0.00</span></div>
-    </div>
-
-    <div class="qr-box">
-        <div id="qrcode"></div>
-        <p style="font-size: 8px;">VALIDACIÓN OFICIAL</p>
+<div id="modal" onclick="this.style.display='none'">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <h3 id="m-title"></h3>
+        <div id="qrcode" style="display: flex; justify-content: center;"></div>
+        <p>Escanea para validar la compra</p>
+        <button onclick="document.getElementById('modal').style.display='none'">Cerrar</button>
     </div>
 </div>
 
 <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    // Captura de datos dinámicos
-    const id = urlParams.get('id') || "B007-00023550";
-    const monto = parseFloat(urlParams.get('monto') || "74.00");
-    const cliente = urlParams.get('cliente') || "WILFREDO ALEJANDRO ZEGARRA LUNA";
-    const prod = urlParams.get('prod') || "CALZADO - SANDALIAS";
+    function agregarVenta() {
+        const cliente = document.getElementById('f-cliente').value;
+        const producto = document.getElementById('f-producto').value;
+        const monto = document.getElementById('f-monto').value;
+        const id = document.getElementById('f-id').value;
 
-    // Cálculos basados en la Boleta Electrónica [cite: 13]
-    const gravada = (monto / 1.18).toFixed(2);
-    const igv = (monto - gravada).toFixed(2);
+        if(!cliente || !monto) return alert("Llena los datos");
 
-    // Rellenar la boleta
-    document.getElementById('folio').innerText = id;
-    document.getElementById('total').innerText = monto.toFixed(2);
-    document.getElementById('gravada').innerText = gravada;
-    document.getElementById('igv').innerText = igv;
-    document.getElementById('cliente').innerText = cliente;
-    document.getElementById('fecha').innerText = new Date().toLocaleDateString();
-    
-    document.getElementById('lista-productos').innerHTML = `
-        <tr><td>1.00</td><td>${prod}</td><td>${monto.toFixed(2)}</td></tr>
-    `;
+        // Creamos el link con el nuevo parámetro "prod"
+        const urlBase = "https://fascinating-platypus-2eb4b1.netlify.app/index.html";
+        const linkFinal = `${urlBase}?id=${id}&monto=${monto}&cliente=${encodeURIComponent(cliente)}&prod=${encodeURIComponent(producto)}`;
 
-    // Generar el QR que apunta a ESTA misma URL con ESTOS datos
-    new QRCode(document.getElementById("qrcode"), {
-        text: window.location.href,
-        width: 100,
-        height: 100
-    });
+        const tabla = document.getElementById('lista-ventas');
+        const fila = tabla.insertRow();
+        fila.innerHTML = `
+            <td>${cliente}</td>
+            <td><strong>${producto}</strong></td>
+            <td>S/ ${parseFloat(monto).toFixed(2)}</td>
+            <td>
+                <button class="btn-action bg-blue" onclick="verQR('${linkFinal}', '${cliente}')">Ver QR</button>
+                <a href="${linkFinal}" target="_blank" class="btn-action bg-green">Abrir Boleta</a>
+            </td>
+        `;
+    }
+
+    function verQR(link, nombre) {
+        document.getElementById('modal').style.display = 'flex';
+        document.getElementById('m-title').innerText = "Validación: " + nombre;
+        document.getElementById('qrcode').innerHTML = "";
+        new QRCode(document.getElementById("qrcode"), { text: link, width: 180, height: 180 });
+    }
 </script>
+
 </body>
 </html>
